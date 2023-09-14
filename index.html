@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tracks</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="top-bar">
+        <button id="back-button">Back</button>
+        <h1 id="page-title">Please listen to my tracks!</h1>
+    </div>
+    
+    <div id="track-list">
+        <!-- Track items will be added dynamically here -->
+    </div>
+
+    <audio id="audio-player" controls></audio>
+
+    <input type="hidden" id="track-id" value="">
+
+    <link rel="stylesheet" href="js/plyr.css">
+    <script src="js/plyr.js"></script>
+    <script src="js/hls.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

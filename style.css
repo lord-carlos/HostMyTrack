@@ -1,0 +1,142 @@
+/* Color Palette */
+:root {
+    --main-bg-color: #fafafa;
+    --player-bg-color: #fafafa;
+    --accent-color: #ff5500;
+    --accent-text-color: #fff;
+    --hover-bg-color: #ff550039;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+}
+
+/* General Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: var(--main-bg-color);
+}
+
+
+/* Customize Plyr player controls */
+
+.plyr--audio {
+    --plyr-color-main: var(--accent-color);
+    --plyr-audio-control-color: var(--accent-color);
+    --plyr-control-icon-size: 50px;
+    --plyr-audio-progress-buffered-background: var(--hover-bg-color);
+    --plyr-progress-loading-background: #49ee5a;
+    --plyr-audio-range-track-background: var(--hover-bg-color);
+}
+
+
+/* ################## */
+
+/* Add styles for the top bar */
+#top-bar {
+    background-color: var(--accent-color); /* Use the accent color variable */
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0px 2px 10px var(--shadow-color); /* Use the shadow color variable */
+}
+
+#back-button {
+    background-color: transparent;
+    color: var(--accent-text-color); /* Use the accent text color variable */
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+#back-button:hover {
+    background-color: var(--hover-bg-color); /* Use the hover background color variable */
+}
+
+#page-title {
+    color: var(--accent-text-color); /* Use the accent text color variable */
+    font-size: 20px;
+    margin: 0;
+}
+
+span {
+    margin: 0 5px;
+}
+
+/* Track List Styles */
+#track-list {
+    margin-left: 10px;
+    overflow-y: auto;
+    max-height: calc(100vh - 135px);
+}
+
+/* Style the scrollbar using the accent color variable */
+#track-list {
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: var(--accent-color) var(--main-bg-color); /* For Firefox */
+
+    /* For WebKit-based browsers (Chrome, Safari) */
+    scrollbar-track-color: var(--main-bg-color);
+    scrollbar-thumb-color: var(--accent-color);
+}
+
+/* Style the scrollbar for WebKit-based browsers (Chrome, Safari) */
+#track-list::-webkit-scrollbar {
+    width: 10px;
+}
+
+#track-list::-webkit-scrollbar-track {
+    background-color: var(--main-bg-color);
+}
+
+#track-list::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color);
+}
+
+.track-item {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 20px;
+    margin-left: 10px;
+    position: relative;
+}
+
+.track-item:hover {
+    background-color: var(--hover-bg-color);
+}
+
+.track-item::before {
+    content: '▶';
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.track-item:hover::before {
+    opacity: 1;
+}
+
+.track-item span {
+    margin-left: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.track-item span::after {
+    content: '';
+    display: inline-block;
+    width: 1em;
+}
+
+.track-item.playing {
+    background-color: var(--accent-color);
+    color: var(--accent-text-color);
+}
