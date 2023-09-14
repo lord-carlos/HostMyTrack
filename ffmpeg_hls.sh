@@ -37,7 +37,7 @@ for aac_file in "$input_dir"/*.aac; do
             mkdir -p "$hls_folder"
             
             # Define the ffmpeg command as an array
-            ffmpeg_command=("ffmpeg" "-loglevel error" "-i" "$aac_file" "-c:a" "copy" "-strict" "experimental" "-f" "hls" "-hls_time" "$hls_time" "-hls_list_size" "0" "$hls_folder/output.m3u8")
+            ffmpeg_command=("ffmpeg" "-loglevel" "error" "-i" "$aac_file" "-c:a" "copy" "-strict" "experimental" "-f" "hls" "-hls_time" "$hls_time" "-hls_list_size" "0" "$hls_folder/output.m3u8")
             
             # Execute the ffmpeg command
             echo "Converting '$filename' to HLS with segment duration of $hls_time seconds..."
