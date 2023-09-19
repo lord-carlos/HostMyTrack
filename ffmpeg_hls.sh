@@ -26,10 +26,10 @@ input_dir="$1"
 hls_time=30
 
 # JSON file to store the information
-json_file="$input_dir/output.json"
+json_file="$input_dir/hls/output.json"
 
-# Initialize an empty JSON array
-echo "[]" > "$json_file"
+# Start the JSON array
+echo "[" > "$json_file"
 
 # Function to execute the ffmpeg command
 run_ffmpeg_command() {
@@ -44,6 +44,8 @@ if [ ! -d "$input_dir" ]; then
 fi
 
 # Iterate over .aac files in the input directory
+first_file=true
+# Iterate over .aac files in the input directory
 for aac_file in "$input_dir"/*.aac; do
     if [ -e "$aac_file" ]; then
         # Extract the filename (without extension) from the aac file
@@ -55,11 +57,16 @@ for aac_file in "$input_dir"/*.aac; do
 
         # Get the play duration using ffprobe
         duration=$(ffprobe -i "$aac_file" -show_entries format=duration -v quiet -of csv="p=0")
+        duration_rounded=$(printf "%.0f" "$duration")
         
         # Add the information to the JSON file
-        jq -n --arg name "$filename" --arg mtime "$mtime" --arg duration "$duration" \
-            '{name: $name, mtime: $mtime, duration: $duration}' | \
-            jq -s ". + [.] | .[0] + .[1][]" >> "$json_file"
+        if [ "$first_file" = true ]; then
+            first_file=false
+        else
+            echo "," >> "$json_file"  # Add a comma separator for all but the first entry
+        fi
+        jq -n --arg name "$filename" --arg mtime "$mtime" --argjson duration "$duration_rounded" \
+            '{name: $name, mtime: $mtime, duration: $duration}' >> "$json_file"
         
         # Check if the corresponding folder exists in the "hls" subfolder
         hls_folder="$input_dir/hls/$filename_noext"
@@ -85,5 +92,8 @@ for aac_file in "$input_dir"/*.aac; do
         fi
     fi
 done
+
+# End the JSON array
+echo "]" >> "$json_file"
 
 echo "All conversions completed."
