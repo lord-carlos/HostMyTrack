@@ -1,13 +1,35 @@
 #!/bin/bash
 
+# Check if the required tools are installed
+if ! command -v ffmpeg &> /dev/null; then
+    echo "Error: ffmpeg is not installed. Please install it and try again."
+    exit 1
+fi
+
+if ! command -v ffprobe &> /dev/null; then
+    echo "Error: ffprobe is not installed. Please install it and try again."
+    exit 1
+fi
+
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq is not installed. Please install it and try again."
+    exit 1
+fi
+
 # Enable debugging mode to print each command
-set -x
+#set -x
 
 # Set the input directory from a user-defined variable
 input_dir="$1"
 
 # Set the HLS segment duration (default to 30 seconds)
 hls_time=30
+
+# JSON file to store the information
+json_file="$input_dir/output.json"
+
+# Initialize an empty JSON array
+echo "[]" > "$json_file"
 
 # Function to execute the ffmpeg command
 run_ffmpeg_command() {
@@ -27,6 +49,17 @@ for aac_file in "$input_dir"/*.aac; do
         # Extract the filename (without extension) from the aac file
         filename=$(basename -- "$aac_file")
         filename_noext="${filename%.*}"
+
+        # Get the file creation date (mtime)
+        mtime=$(date -r "$aac_file" "+%Y-%m-%d %H:%M:%S")
+
+        # Get the play duration using ffprobe
+        duration=$(ffprobe -i "$aac_file" -show_entries format=duration -v quiet -of csv="p=0")
+        
+        # Add the information to the JSON file
+        jq -n --arg name "$filename" --arg mtime "$mtime" --arg duration "$duration" \
+            '{name: $name, mtime: $mtime, duration: $duration}' | \
+            jq -s ". + [.] | .[0] + .[1][]" >> "$json_file"
         
         # Check if the corresponding folder exists in the "hls" subfolder
         hls_folder="$input_dir/hls/$filename_noext"
