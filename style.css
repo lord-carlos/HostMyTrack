@@ -28,6 +28,12 @@ body {
     --plyr-audio-range-track-background: var(--hover-bg-color);
 }
 
+#bottom {
+    position: fixed;
+    bottom: 0px;
+    left: 0;
+    right: 0;
+}
 
 /* ################## */
 
@@ -103,6 +109,7 @@ span {
     font-size: 20px;
     margin-left: 10px;
     position: relative;
+    justify-content: space-between; /* Align children to the start and end */
 }
 
 .track-item:hover {
@@ -124,9 +131,6 @@ span {
 
 .track-item span {
     margin-left: 20px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     width: 100%;
 }
 
@@ -140,3 +144,29 @@ span {
     background-color: var(--accent-color);
     color: var(--accent-text-color);
 }
+
+.track-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: fit-content;
+}
+
+.duration {
+    color: gray; /* Gray color for "duration" */
+    max-width: fit-content; /* Allow "duration" to expand or shrink to its content */
+    text-align: right; /* Right-align "duration" content */
+}
+
+.mtime {
+    color: gray; /* Gray color for "mtime" */
+    max-width: fit-content; /* Allow "mtime" to expand or shrink to its content */
+    text-align: right; /* Right-align "mtime" content */
+    display: none;
+}
+
+/* Show "mtime" on hover */
+.track-item:hover .mtime {
+    display: inline-block;
+}
+

@@ -94,11 +94,24 @@ function createTrackListUI() {
     trackList.forEach((track, index) => {
         const trackItem = document.createElement('div');
         trackItem.classList.add('track-item');
+
+        // Format the duration in HH:mm:ss
+        const durationInSeconds = track.duration;
+        const formattedDuration = formatDuration(durationInSeconds);
+
+        // Format "mtime" to a human-readable date (YYYY-MM-DD)
+        const mtime = formatMtime(track.mtime);
+
+
         // Replace underscores with spaces and remove file extensions
         const trackNameNoExtension = track.name.replace(/\.(mp3|ogg|aac)$/i, '')
         const trackName = trackNameNoExtension.replace(/_/g, ' ');
 
-        trackItem.innerHTML = `<span>${trackName}</span>`;
+        trackItem.innerHTML = `
+            <span class="track-name">${trackName}</span>
+            <span class="mtime">${mtime}</span>
+            <span class="duration">${formattedDuration}</span>
+        `;
 
         trackItem.addEventListener('click', () => {
             currentIndex = index;
@@ -156,3 +169,20 @@ backButton.addEventListener('click', () => {
     // Navigate to the new URL
     window.location.href = newURL;
 });
+
+// Function to format duration in HH:mm:ss
+function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+}
+
+// Function to format "mtime" to YYYY-MM-DD
+function formatMtime(mtime) {
+    const date = new Date(mtime);
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-based
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
