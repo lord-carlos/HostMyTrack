@@ -21,33 +21,24 @@ To set up the project, follow these steps:
 
 ## Features
 
-- Minimalist SoundCloud-like audio player.
+- Minimalist SoundCloud-like audio player from static website.
 - Customizable website name and track data URLs.
 - HLS.js for adaptive streaming and playback.
-- Plyr for an enhanced audio player interface.
+- Simple bash script to generate HLS data. 
 
 ## Additional Tools
 
-- **FFmpeg HLS Script**: Included is an `ffmpeg_hls.sh` script that simplifies the process of converting audio files to HLS format. It iterates over all `.acc` files in a given directory, creates a folder for each track, and generates the necessary `.m3u8` and `.ts` files for HLS streaming.
-- **Nginx json share**: It's quite simple. Share the folder that contains your `.acc` files in nginx like so:
+- **FFmpeg HLS Script**: Included is an `ffmpeg_hls.sh` script that simplifies the process of converting audio files to HLS format. It iterates over all `.acc` files in a given directory, creates a folder for each track, and generates the necessary `.m3u8` and `.ts` files for HLS streaming.It also generates a `output.json` that we for the playlist.
 
-```
-        location /music {
-                alias /media/foo/my/aac_files/;
-                autoindex on;
-                autoindex_format json;
-                charset utf-8;
-        }
-```
-* This becomes becomes your baseurl
 
 ## Todo
 
-* **Remove json share**: because we need to run a script any way, we can get away with the json share and just let it create a json file. Put that into the /hls dir. Make it a single URL config.
 * **Screenshot**: Every project needs a screenshot.
+* **Duration is broken**: sometimes it shows very long times. 🕵️‍♀️
 
 ## Dependencies
 
+- The `ffmpeg_hls.sh` script needs `jq`, `ffprobe` and `ffmpeg` installed.
 - [HLS.js](https://github.com/video-dev/hls.js): A JavaScript library for HLS playback.
 - [Plyr](https://github.com/sampotts/plyr): A simple HTML5 media player that provides a customizable audio player interface.
 
