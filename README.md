@@ -3,6 +3,10 @@ This is a minimalist SoundCloud clone project that allows you to host and play a
 
 Thanks to HLS it works with very large files. We can stream multi hour long sets and it will only download the part you actually listen to.
 
+## Screenshot
+
+![A screenshot show the app](screenshot.png)
+
 ## Getting Started
 
 To set up the project, follow these steps:
