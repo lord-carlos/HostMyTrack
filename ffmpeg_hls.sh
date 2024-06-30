@@ -43,20 +43,19 @@ if [ ! -d "$input_dir" ]; then
     exit 1
 fi
 
-# Iterate over .aac files in the input directory
+# Iterate over .mkv files in the input directory
 first_file=true
-# Iterate over .aac files in the input directory
-for aac_file in "$input_dir"/*.aac; do
-    if [ -e "$aac_file" ]; then
-        # Extract the filename (without extension) from the aac file
-        filename=$(basename -- "$aac_file")
+for mkv_file in "$input_dir"/*.mkv; do
+    if [ -e "$mkv_file" ]; then
+        # Extract the filename (without extension) from the mkv file
+        filename=$(basename -- "$mkv_file")
         filename_noext="${filename%.*}"
 
         # Get the file creation date (mtime)
-        mtime=$(date -r "$aac_file" "+%Y-%m-%d %H:%M:%S")
+        mtime=$(date -r "$mkv_file" "+%Y-%m-%d %H:%M:%S")
 
         # Get the play duration using ffprobe
-        duration=$(ffprobe -i "$aac_file" -show_entries format=duration -v quiet -of csv="p=0")
+        duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$mkv_file")
         duration_rounded=$(printf "%.0f" "$duration")
         
         # Add the information to the JSON file
@@ -77,10 +76,20 @@ for aac_file in "$input_dir"/*.aac; do
             mkdir -p "$hls_folder"
             
             # Define the ffmpeg command as an array
-            ffmpeg_command=("ffmpeg" "-loglevel" "error" "-i" "$aac_file" "-c:a" "copy" "-strict" "experimental" "-f" "hls" "-hls_time" "$hls_time" "-hls_list_size" "0" "$hls_folder/output.m3u8")
+            ffmpeg_command=(
+                "ffmpeg" "-loglevel" "error"
+                "-i" "$mkv_file"
+                "-map" "0:a"  # Select the first audio stream
+                "-c" "copy"  # Convert to AAC with 128k bitrate
+                "-f" "hls"
+                "-hls_time" "$hls_time"
+                "-hls_list_size" "0"
+                "-hls_segment_filename" "$hls_folder/segment%03d.ts"
+                "$hls_folder/playlist.m3u8"
+            )
             
             # Execute the ffmpeg command
-            echo "Converting '$filename' to HLS with segment duration of $hls_time seconds..."
+            echo "Converting audio from '$filename' to HLS with segment duration of $hls_time seconds..."
             run_ffmpeg_command "${ffmpeg_command[@]}"
             result=$?
             if [ $result -eq 0 ]; then

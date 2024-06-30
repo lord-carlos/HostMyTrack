@@ -115,7 +115,7 @@ function createTrackListUI() {
 
         trackItem.addEventListener('click', () => {
             currentIndex = index;
-            const hlsPlaylistUrl = baseURL + trackNameNoExtension + "/output.m3u8";
+            const hlsPlaylistUrl = baseURL + trackNameNoExtension + "/playlist.m3u8";
             // const hlsPlaylistUrl = baseURL;
 
             hls.loadSource(hlsPlaylistUrl);
