@@ -104,7 +104,7 @@ function createTrackListUI() {
 
 
         // Replace underscores with spaces and remove file extensions
-        const trackNameNoExtension = track.name.replace(/\.(mp3|ogg|aac)$/i, '')
+        const trackNameNoExtension = track.name.replace(/\.(mkv|mp3|ogg|aac)$/i, '')
         const trackName = trackNameNoExtension.replace(/_/g, ' ');
 
         trackItem.innerHTML = `
