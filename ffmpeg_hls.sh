@@ -64,7 +64,7 @@ for mkv_file in "$input_dir"/*.mkv; do
         else
             echo "," >> "$json_file"  # Add a comma separator for all but the first entry
         fi
-        jq -n --arg name "$filename" --arg mtime "$mtime" --argjson duration "$duration_rounded" \
+        jq -n --arg name "$filename_noext.aac" --arg mtime "$mtime" --argjson duration "$duration_rounded" \
             '{name: $name, mtime: $mtime, duration: $duration}' >> "$json_file"
         
         # Check if the corresponding folder exists in the "hls" subfolder
