@@ -3,15 +3,16 @@ const trackListContainer = document.getElementById('track-list');
 const backButton = document.getElementById('back-button');
 let currentIndex = 0;
 let trackList = [];
-var audio = document.querySelector('#audio-player');
-var hls = new Hls();
+let audio = document.querySelector('#audio-player');
+let hls = new Hls();
+let firstTime = true;
 
 // Common audio file extensions
 const commonAudioFormats = ['.mp3', '.ogg', '.wav', '.aac', '.m4a', '.flac'];
 
 //The URL
-var baseURL = '';
-var jsonUrl = '';
+let baseURL = '';
+let jsonUrl = '';
 
 const audioPlayer = new Plyr(audio, {
     controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume']
@@ -137,7 +138,12 @@ function createTrackListUI() {
             window.hls = hls;
             window.audioPlayer = audioPlayer;
             // Set the URL with the current track ID
-            audioPlayer.play();
+            // on first load, don't play the audio
+            if (!firstTime) {
+                audioPlayer.play();
+            } else {
+                firstTime = false;
+            }            
             // audioPlayer.config.urls = {
             //     download: generateURL(),
             setURL(track.name);
