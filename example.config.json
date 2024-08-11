@@ -1,5 +1,5 @@
 {
     "websiteName": "My Tracks :)",
-    "baseURL": "",
-    "jsonURL": "example.json"
+    "baseURL": "http://127.0.0.1:5500/example/",
+    "jsonURL": "example/example.json"
 }
