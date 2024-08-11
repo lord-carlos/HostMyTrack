@@ -35,7 +35,7 @@ function playHLS(audioPlayer, hlsPlaylistUrl) {
 function handleNativeHLS(hlsPlaylistUrl, audioPlayer) {
     console.log('Native HLS support');
     audio.src = hlsPlaylistUrl;
-    audioPlayer.on('ready', () => {
+    audioPlayer.on('canplay', () => {
         play(audioPlayer);
     });
 }
