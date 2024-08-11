@@ -15,15 +15,9 @@ let baseURL = '';
 let jsonUrl = '';
 
 const audioPlayer = new Plyr(audio, {
-    controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume']
+    controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume'],
+    keyboard: { focused: true, global: true },
 });
-
-function initPlyr() {
-    return new Plyr(audio, {
-        controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume']
-    });
-}
-
 
 // Function to play HLS content
 function playHLS(audioPlayer, hlsPlaylistUrl) {

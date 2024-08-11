@@ -28,6 +28,22 @@ body {
     --plyr-audio-range-track-background: var(--hover-bg-color);
 }
 
+/* Adjust icon size for smaller screens */
+@media screen and (max-width: 768px) {
+    .plyr--audio {
+        --plyr-control-icon-size: 30px;
+    }
+}
+
+/* Further reduce size for very small screens */
+@media screen and (max-width: 480px) {
+    .plyr--audio {
+        --plyr-control-icon-size: 24px;
+        --plyr-control-spacing: 8px;
+        --plyr-control-padding: 8px;
+    }
+}
+
 #bottom {
     position: fixed;
     bottom: 0px;
@@ -72,7 +88,6 @@ span {
 
 /* Track List Styles */
 #track-list {
-    margin-left: 10px;
     overflow-y: auto;
     max-height: calc(100vh - 135px);
 }
@@ -107,7 +122,6 @@ span {
     cursor: pointer;
     transition: background-color 0.2s;
     font-size: 20px;
-    margin-left: 10px;
     position: relative;
     justify-content: space-between; /* Align children to the start and end */
 }
