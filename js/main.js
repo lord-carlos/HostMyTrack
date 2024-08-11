@@ -17,10 +17,53 @@ let jsonUrl = '';
 const audioPlayer = new Plyr(audio, {
     controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume']
 });
-//     urls: {
-// download: generateURL(),
-// },
 
+function initPlyr() {
+    return new Plyr(audio, {
+        controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume']
+    });
+}
+
+
+// Function to play HLS content
+function playHLS(audioPlayer, hlsPlaylistUrl) {
+    if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS support
+        handleNativeHLS(hlsPlaylistUrl, audioPlayer);
+    } else if (Hls.isSupported()) {
+        // HLS.js fallback
+        fallbackPlayHLS(hlsPlaylistUrl, audioPlayer);
+    } else {
+        console.error('HLS is not supported in this browser.');
+    }
+}
+
+function handleNativeHLS(hlsPlaylistUrl, audioPlayer) {
+    console.log('Native HLS support');
+    audio.src = hlsPlaylistUrl;
+    audioPlayer.on('ready', () => {
+        play(audioPlayer);
+    });
+}
+
+
+function fallbackPlayHLS(hlsPlaylistUrl, audioPlayer) {
+    console.log('HLS.js fallback');
+    hls = new Hls();
+    hls.loadSource(hlsPlaylistUrl);
+    hls.attachMedia(audio);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        play(audioPlayer);
+    });
+}
+
+function play(audioPlayer) {
+    if (!firstTime) {
+        audioPlayer.play();
+    } else {
+        firstTime = false;
+    }
+}
 
 // Function to set the URL with the current track ID
 function setURL(trackId) {
@@ -114,49 +157,38 @@ function createTrackListUI() {
             <span class="duration">${formattedDuration}</span>
         `;
 
+        // Usage in your track selection logic
         trackItem.addEventListener('click', () => {
             currentIndex = index;
             const hlsPlaylistUrl = baseURL + trackNameNoExtension + "/playlist.m3u8";
-            // const hlsPlaylistUrl = baseURL;
-
-            hls.loadSource(hlsPlaylistUrl);
-
-            // };
 
             // Remove the 'playing' class from all track items
             document.querySelectorAll('.track-item').forEach((item) => {
                 item.classList.remove('playing');
             });
 
-            audioPlayer.pause(); // Pause the Plyr player
-            hls.stopLoad(); // Stop loading the current source
-            hls.detachMedia(); // Detach hls.js from the media element
+            // Stop current playback
+            if (audioPlayer) {
+                audioPlayer.pause();
+                if (hls) {
+                    hls.stopLoad();
+                    hls.detachMedia();
+                }
+            }
+
             // Add the 'playing' class to the currently selected track item
             trackItem.classList.add('playing');
 
-            hls.attachMedia(audio);
-            window.hls = hls;
-            window.audioPlayer = audioPlayer;
+            // Initialize playback with new source
+            playHLS(audioPlayer, hlsPlaylistUrl);
+
             // Set the URL with the current track ID
-            // on first load, don't play the audio
-            if (!firstTime) {
-                audioPlayer.play();
-            } else {
-                firstTime = false;
-            }            
-            // audioPlayer.config.urls = {
-            //     download: generateURL(),
             setURL(track.name);
         });
         trackListContainer.appendChild(trackItem);
     });
 }
 
-// function generateURL() {
-//     const params = new URLSearchParams(window.location.search);
-//     const trackId = params.get('track');
-//     return 'https://example.com/path/to/download', trackId;
-// }
 
 // Add an event listener to the back button
 backButton.addEventListener('click', () => {
