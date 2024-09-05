@@ -21,12 +21,12 @@ const audioPlayer = new Plyr(audio, {
 
 // Function to play HLS content
 function playHLS(audioPlayer, hlsPlaylistUrl) {
-    if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+    if (Hls.isSupported()) {
+        // HLS.js fallback
+        playWithHlsJs(hlsPlaylistUrl, audioPlayer);
+    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
         // Native HLS support
         handleNativeHLS(hlsPlaylistUrl, audioPlayer);
-    } else if (Hls.isSupported()) {
-        // HLS.js fallback
-        fallbackPlayHLS(hlsPlaylistUrl, audioPlayer);
     } else {
         console.error('HLS is not supported in this browser.');
     }
@@ -41,7 +41,7 @@ function handleNativeHLS(hlsPlaylistUrl, audioPlayer) {
 }
 
 
-function fallbackPlayHLS(hlsPlaylistUrl, audioPlayer) {
+function playWithHlsJs(hlsPlaylistUrl, audioPlayer) {
     console.log('HLS.js fallback');
     hls = new Hls();
     hls.loadSource(hlsPlaylistUrl);
