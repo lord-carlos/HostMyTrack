@@ -95,8 +95,13 @@ fetch('config.json')
     .then((config) => {
         // Use the configuration values in your code
         const websiteName = config.websiteName;
-        baseURL = config.baseURL;
-        jsonUrl = config.jsonURL;
+        baseURL = config.baseURL || '';
+        jsonUrl = config.jsonURL || '';
+
+        // Normalize baseURL to ensure it ends with a trailing slash
+        if (baseURL && !baseURL.endsWith('/')) {
+            baseURL = baseURL + '/';
+        }
 
         // Use these values to configure your website
         document.title = websiteName;

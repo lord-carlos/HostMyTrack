@@ -1,0 +1,10 @@
+# Docker ignore
+.git
+node_modules
+.DS_Store
+docker/
+.swp
+**/.git
+**/.gitignore
+**/Dockerfile
+.*/

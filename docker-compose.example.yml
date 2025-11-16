@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  hostmytrack:
+    build: .
+    image: hostmytrack:latest
+    container_name: hostmytrack
+    restart: unless-stopped
+    # Map the single folder containing music/hls into the container at /srv/media
+    # The UI files are baked into the image; if you want to override them, mount ./example/ -> /usr/share/nginx/html
+    volumes:
+      # Optional UI override:
+      # - ./example/:/usr/share/nginx/html:ro
+      - /path/on/host/for/music:/srv/media:ro
+
+    # Example Traefik labels - replace example.com with your own domain
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hostmytrack.rule=Host(`example.com`)"
+      - "traefik.http.services.hostmytrack.loadbalancer.server.port=80"
+
+    # If you don't use Traefik and want to bind port 80 for testing:
+    # ports:
+    #   - "8080:80"
+
+    environment:
+      - WEBSITE_NAME=My Tracks
+

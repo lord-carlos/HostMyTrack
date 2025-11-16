@@ -23,6 +23,34 @@ To set up the project, follow these steps:
 
 4. Run the project on a web server to see your SoundCloud clone in action.
 
+
+## Docker & Deployment
+You can run this project in a simple Nginx-based Docker container; the image serves the UI and a single mapped folder for your HLS content. The container is intentionally domain-agnostic so Traefik (or your reverse proxy) can route requests.
+
+1. Build the Docker image:
+```powershell
+docker build -t hostmytrack:latest .
+```
+2. Use the example docker-compose to run it with a bind mount to your music root folder (this example uses Traefik labels):
+
+```yaml
+services:
+   hostmytrack:
+      build: .
+      volumes:
+         - /path/on/host/for/music:/srv/media:ro
+      labels:
+         - "traefik.enable=true"
+         - "traefik.http.routers.hostmytrack.rule=Host(`your.domain.tld`)"
+         - "traefik.http.services.hostmytrack.loadbalancer.server.port=80"
+```
+
+3. After starting the container, ensure your `config.json` points to the relative paths that your nginx alias exposes. Defaults (in `example.config.json`) are for `/hls` and `/hls/output.json`.
+
+Notes:
+- The container exposes the site via `/` and a media alias at `/hls` which maps to `/srv/media/hls` in the container. The `example.config.json` includes default paths that should work if you mount your music root to `/srv/media` in the container and keep your HLS subfolder under `hls/`.
+- If you want to change `websiteName` without editing `config.json`, pass the `WEBSITE_NAME` environment variable in your docker-compose services section. The entrypoint will update `config.json` automatically.
+- Do NOT set `baseURL` in a way that references your domain; baseURL in `config.json` should be relative like `/hls/` if you rely on the mounted folder path.
 ## Features
 
 - Minimalist SoundCloud-like audio player from static website.
