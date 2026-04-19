@@ -4,15 +4,15 @@ const backButton = document.getElementById('back-button');
 let currentIndex = 0;
 let trackList = [];
 let audio = document.querySelector('#audio-player');
-let hls = new Hls();
+let hls = null;
 let firstTime = true;
 
 // Common audio file extensions
 const commonAudioFormats = ['.mp3', '.ogg', '.wav', '.aac', '.m4a', '.flac'];
 
-//The URL
 let baseURL = '';
 let jsonUrl = '';
+let websiteName = '';
 
 const audioPlayer = new Plyr(audio, {
     controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume'],
@@ -35,7 +35,7 @@ function playHLS(audioPlayer, hlsPlaylistUrl) {
 function handleNativeHLS(hlsPlaylistUrl, audioPlayer) {
     console.log('Native HLS support');
     audio.src = hlsPlaylistUrl;
-    audioPlayer.on('canplay', () => {
+    audioPlayer.once('canplay', () => {
         play(audioPlayer);
     });
 }
@@ -43,11 +43,33 @@ function handleNativeHLS(hlsPlaylistUrl, audioPlayer) {
 
 function playWithHlsJs(hlsPlaylistUrl, audioPlayer) {
     console.log('HLS.js fallback');
+    if (hls) {
+        hls.destroy();
+    }
     hls = new Hls();
     hls.loadSource(hlsPlaylistUrl);
     hls.attachMedia(audio);
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
         play(audioPlayer);
+    });
+    hls.on(Hls.Events.ERROR, (_event, data) => {
+        console.error('HLS error:', data.type, data.details);
+        if (data.fatal) {
+            switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                    console.error('Fatal network error, trying to recover...');
+                    hls.startLoad();
+                    break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                    console.error('Fatal media error, trying to recover...');
+                    hls.recoverMediaError();
+                    break;
+                default:
+                    console.error('Fatal unrecoverable error, destroying HLS.');
+                    hls.destroy();
+                    break;
+            }
+        }
     });
 }
 
@@ -57,6 +79,16 @@ function play(audioPlayer) {
     } else {
         firstTime = false;
     }
+}
+
+function updateMediaSession(trackName) {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+        title: trackName,
+        artist: websiteName,
+    });
+    navigator.mediaSession.setActionHandler('play', () => audioPlayer.play());
+    navigator.mediaSession.setActionHandler('pause', () => audioPlayer.pause());
 }
 
 // Function to set the URL with the current track ID
@@ -93,8 +125,7 @@ function loadTrackFromURL() {
 fetch('config.json')
     .then((response) => response.json())
     .then((config) => {
-        // Use the configuration values in your code
-        const websiteName = config.websiteName;
+        websiteName = config.websiteName;
         baseURL = config.baseURL || '';
         jsonUrl = config.jsonURL || '';
 
@@ -119,7 +150,7 @@ function fetchShareJson() {
         .then((response) => response.json())
         .then((data) => {
             // Filter out tracks with non-common audio formats
-            trackList = data.reverse().filter((track) => {
+            trackList = [...data].reverse().filter((track) => {
                 const fileExtension = track.name.toLowerCase().match(/\.\w+$/);
                 return fileExtension && commonAudioFormats.includes(fileExtension[0]);
             });
@@ -180,6 +211,10 @@ function createTrackListUI() {
 
             // Initialize playback with new source
             playHLS(audioPlayer, hlsPlaylistUrl);
+
+            // Update Media Session and page title
+            updateMediaSession(trackName);
+            document.title = `${trackName} - ${websiteName}`;
 
             // Set the URL with the current track ID
             setURL(track.name);

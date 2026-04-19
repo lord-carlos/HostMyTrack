@@ -1,2 +1,5 @@
 config.json
 example.json
+node_modules/
+bun.lockb
+js/vendor/

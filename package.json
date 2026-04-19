@@ -1,0 +1,11 @@
+{
+  "name": "hostmytrack",
+  "private": true,
+  "scripts": {
+    "postinstall": "bun run scripts/copy-vendor.js"
+  },
+  "dependencies": {
+    "hls.js": "^1.6.16",
+    "plyr": "^3.8.4"
+  }
+}
