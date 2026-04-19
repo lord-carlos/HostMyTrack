@@ -1,0 +1,20 @@
+services:
+  hostmytrack:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ${MEDIA_PATH}:/srv/media:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hostmytrack.rule=Host(`${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.hostmytrack.entrypoints=websecure"
+      - "traefik.http.routers.hostmytrack.tls.certresolver=${TRAEFIK_CERTRESOLVER}"
+      - "traefik.http.routers.hostmytrack.tls.domains[0].main=${TRAEFIK_BASEDOMAIN}"
+      - "traefik.http.routers.hostmytrack.tls.domains[0].sans=*.${TRAEFIK_BASEDOMAIN}"
+      - "traefik.http.services.hostmytrack.loadbalancer.server.port=80"
+    networks:
+      - traefik-net
+
+networks:
+  traefik-net:
+    external: true
