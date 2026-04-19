@@ -1,14 +1,17 @@
 const trackIdInput = document.getElementById('track-id');
 const trackListContainer = document.getElementById('track-list');
 const backButton = document.getElementById('back-button');
-let currentIndex = 0;
+let currentIndex = -1;
 let trackList = [];
 let audio = document.querySelector('#audio-player');
 let hls = null;
 let firstTime = true;
+let lastSaveTime = 0;
+let pendingSeekTime = null;
 
-// Common audio file extensions
 const commonAudioFormats = ['.mp3', '.ogg', '.wav', '.aac', '.m4a', '.flac'];
+const STORAGE_KEY = 'hostmytrack_state';
+const SAVE_INTERVAL = 5000;
 
 let baseURL = '';
 let jsonUrl = '';
@@ -19,13 +22,14 @@ const audioPlayer = new Plyr(audio, {
     keyboard: { focused: true, global: true },
 });
 
-// Function to play HLS content
+// ###############
+// HLS Playback
+// ###############
+
 function playHLS(audioPlayer, hlsPlaylistUrl) {
     if (Hls.isSupported()) {
-        // HLS.js fallback
         playWithHlsJs(hlsPlaylistUrl, audioPlayer);
     } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native HLS support
         handleNativeHLS(hlsPlaylistUrl, audioPlayer);
     } else {
         console.error('HLS is not supported in this browser.');
@@ -39,7 +43,6 @@ function handleNativeHLS(hlsPlaylistUrl, audioPlayer) {
         play(audioPlayer);
     });
 }
-
 
 function playWithHlsJs(hlsPlaylistUrl, audioPlayer) {
     console.log('HLS.js fallback');
@@ -79,7 +82,18 @@ function play(audioPlayer) {
     } else {
         firstTime = false;
     }
+    if (pendingSeekTime !== null) {
+        const seek = pendingSeekTime;
+        pendingSeekTime = null;
+        setTimeout(() => {
+            audio.currentTime = seek;
+        }, 200);
+    }
 }
+
+// ###############
+// Media Session
+// ###############
 
 function updateMediaSession(trackName) {
     if (!('mediaSession' in navigator)) return;
@@ -89,39 +103,94 @@ function updateMediaSession(trackName) {
     });
     navigator.mediaSession.setActionHandler('play', () => audioPlayer.play());
     navigator.mediaSession.setActionHandler('pause', () => audioPlayer.pause());
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+        if (currentIndex < trackList.length - 1) {
+            loadTrackByIndex(currentIndex + 1);
+        }
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+        if (currentIndex > 0) {
+            loadTrackByIndex(currentIndex - 1);
+        }
+    });
 }
 
-// Function to set the URL with the current track ID
+// ###############
+// Playback State
+// ###############
+
+function savePlaybackState() {
+    if (currentIndex < 0 || !trackList[currentIndex]) return;
+    const state = {
+        track: trackList[currentIndex].name,
+        time: audio.currentTime || 0,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadPlaybackState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+}
+
+function clearPlaybackState() {
+    localStorage.removeItem(STORAGE_KEY);
+}
+
+function restoreOrLoad() {
+    const params = new URLSearchParams(window.location.search);
+    const trackId = params.get('track');
+    if (trackId) {
+        const index = trackList.findIndex((t) => t.name === trackId);
+        if (index !== -1) {
+            loadTrackByIndex(index);
+            return;
+        }
+    }
+
+    const state = loadPlaybackState();
+    if (state) {
+        const index = trackList.findIndex((t) => t.name === state.track);
+        if (index !== -1) {
+            pendingSeekTime = state.time;
+            loadTrackByIndex(index);
+            return;
+        }
+    }
+
+    loadTrackByIndex(0);
+}
+
+// ###############
+// Track Navigation
+// ###############
+
+function loadTrackByIndex(index) {
+    if (index < 0 || index >= trackList.length) return;
+    const trackItem = trackListContainer.children[index];
+    if (!trackItem) return;
+    trackItem.dispatchEvent(new Event('click', { bubbles: true }));
+    trackItem.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ###############
+// URL
+// ###############
+
 function setURL(trackId) {
     history.pushState({ trackId }, '', `?track=${trackId}`);
     trackIdInput.value = trackId;
 }
 
-// Function to load the track from the URL
-function loadTrackFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    const trackId = params.get('track');
-    if (trackId) {
-        const index = trackList.findIndex((track) => track.name === trackId);
-        if (index !== -1) {
-            currentIndex = index;
-
-            // Trigger the click event for the corresponding track item
-            const trackItem = trackListContainer.children[index];
-            if (trackItem) {
-                const clickEvent = new Event('click', { bubbles: true });
-                trackItem.dispatchEvent(clickEvent);
-
-                // Scroll to the loaded track item
-                trackItem.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-    }
-}
-
 // ###############
-// HERE WE GO BOIS
+// Init
 // ###############
+
 fetch('config.json')
     .then((response) => response.json())
     .then((config) => {
@@ -129,27 +198,21 @@ fetch('config.json')
         baseURL = config.baseURL || '';
         jsonUrl = config.jsonURL || '';
 
-        // Normalize baseURL to ensure it ends with a trailing slash
         if (baseURL && !baseURL.endsWith('/')) {
             baseURL = baseURL + '/';
         }
 
-        // Use these values to configure your website
         document.title = websiteName;
         const pageTitle = document.getElementById('page-title');
         pageTitle.textContent = websiteName;
-        // Update other parts of your code as needed
         fetchShareJson();
     })
     .catch((error) => console.error('Error loading configuration:', error));
 
-
 function fetchShareJson() {
-    // Load tracks from jsonUrl
     fetch(jsonUrl)
         .then((response) => response.json())
         .then((data) => {
-            // Filter out tracks with non-common audio formats
             trackList = [...data].reverse().filter((track) => {
                 const fileExtension = track.name.toLowerCase().match(/\.\w+$/);
                 return fileExtension && commonAudioFormats.includes(fileExtension[0]);
@@ -158,27 +221,22 @@ function fetchShareJson() {
             createTrackListUI();
         })
         .then(() => {
-            loadTrackFromURL(); // Load track from URL when the page loads
+            restoreOrLoad();
         })
         .catch((error) => console.error(error));
 }
 
 function createTrackListUI() {
-    trackListContainer.innerHTML = ''; // Clear existing items
+    trackListContainer.innerHTML = '';
     trackList.forEach((track, index) => {
         const trackItem = document.createElement('div');
         trackItem.classList.add('track-item');
 
-        // Format the duration in HH:mm:ss
         const durationInSeconds = track.duration;
         const formattedDuration = formatDuration(durationInSeconds);
-
-        // Format "mtime" to a human-readable date (YYYY-MM-DD)
         const mtime = formatMtime(track.mtime);
 
-
-        // Replace underscores with spaces and remove file extensions
-        const trackNameNoExtension = track.name.replace(/\.(mkv|mp3|ogg|aac)$/i, '')
+        const trackNameNoExtension = track.name.replace(/\.(mkv|mp3|ogg|aac)$/i, '');
         const trackName = trackNameNoExtension.replace(/_/g, ' ');
 
         trackItem.innerHTML = `
@@ -187,17 +245,15 @@ function createTrackListUI() {
             <span class="duration">${formattedDuration}</span>
         `;
 
-        // Usage in your track selection logic
         trackItem.addEventListener('click', () => {
+            savePlaybackState();
             currentIndex = index;
-            const hlsPlaylistUrl = baseURL + trackNameNoExtension + "/playlist.m3u8";
+            const hlsPlaylistUrl = baseURL + trackNameNoExtension + '/playlist.m3u8';
 
-            // Remove the 'playing' class from all track items
             document.querySelectorAll('.track-item').forEach((item) => {
                 item.classList.remove('playing');
             });
 
-            // Stop current playback
             if (audioPlayer) {
                 audioPlayer.pause();
                 if (hls) {
@@ -206,43 +262,62 @@ function createTrackListUI() {
                 }
             }
 
-            // Add the 'playing' class to the currently selected track item
             trackItem.classList.add('playing');
-
-            // Initialize playback with new source
             playHLS(audioPlayer, hlsPlaylistUrl);
-
-            // Update Media Session and page title
             updateMediaSession(trackName);
             document.title = `${trackName} - ${websiteName}`;
-
-            // Set the URL with the current track ID
             setURL(track.name);
         });
         trackListContainer.appendChild(trackItem);
     });
 }
 
+// ###############
+// Auto-advance
+// ###############
 
-// Add an event listener to the back button
+audioPlayer.on('ended', () => {
+    if (currentIndex >= 0) {
+        clearPlaybackState();
+    }
+    const nextIndex = currentIndex + 1;
+    if (nextIndex < trackList.length) {
+        loadTrackByIndex(nextIndex);
+    }
+});
+
+// ###############
+// Periodic state save
+// ###############
+
+audioPlayer.on('timeupdate', () => {
+    const now = Date.now();
+    if (now - lastSaveTime >= SAVE_INTERVAL) {
+        lastSaveTime = now;
+        savePlaybackState();
+    }
+});
+
+window.addEventListener('beforeunload', () => {
+    savePlaybackState();
+});
+
+// ###############
+// Back button
+// ###############
+
 backButton.addEventListener('click', () => {
-    // Get the current URL
     const currentURL = window.location.href;
-
-    // Split the URL by '/'
     const parts = currentURL.split('/');
-
-    // Remove the last part (the current page or file)
     parts.pop();
-
-    // Join the parts back together to form the new URL
-    const newURL = parts.join('/') + '/'; // Add a trailing slash to represent the directory
-
-    // Navigate to the new URL
+    const newURL = parts.join('/') + '/';
     window.location.href = newURL;
 });
 
-// Function to format duration in HH:mm:ss
+// ###############
+// Formatters
+// ###############
+
 function formatDuration(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -250,11 +325,10 @@ function formatDuration(seconds) {
     return `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
 }
 
-// Function to format "mtime" to YYYY-MM-DD
 function formatMtime(mtime) {
     const date = new Date(mtime);
     const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-based
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
