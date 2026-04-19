@@ -39,6 +39,12 @@ function playHLS(audioPlayer, hlsPlaylistUrl) {
 function handleNativeHLS(hlsPlaylistUrl, audioPlayer) {
     console.log('Native HLS support');
     audio.src = hlsPlaylistUrl;
+    const seek = pendingSeekTime;
+    audioPlayer.once('loadedmetadata', () => {
+        if (seek !== null) {
+            trySeek(seek);
+        }
+    });
     audioPlayer.once('canplay', () => {
         play(audioPlayer);
     });
@@ -49,7 +55,12 @@ function playWithHlsJs(hlsPlaylistUrl, audioPlayer) {
     if (hls) {
         hls.destroy();
     }
-    hls = new Hls();
+    const opts = {};
+    if (pendingSeekTime !== null) {
+        opts.startPosition = pendingSeekTime;
+        pendingSeekTime = null;
+    }
+    hls = new Hls(opts);
     hls.loadSource(hlsPlaylistUrl);
     hls.attachMedia(audio);
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -286,16 +297,20 @@ audioPlayer.on('ended', () => {
 });
 
 // ###############
-// Seek on play
+// Seek helper (native HLS)
 // ###############
 
-audio.addEventListener('playing', () => {
-    if (pendingSeekTime !== null) {
-        const seek = pendingSeekTime;
-        pendingSeekTime = null;
-        audio.currentTime = seek;
-    }
-});
+function trySeek(targetTime) {
+    const attempt = () => {
+        const s = audio.seekable;
+        if (s.length > 0 && targetTime >= s.start(0) && targetTime <= s.end(0)) {
+            audio.currentTime = targetTime;
+        } else {
+            setTimeout(attempt, 300);
+        }
+    };
+    attempt();
+}
 
 // ###############
 // Periodic state save
