@@ -84,13 +84,6 @@ function play(audioPlayer) {
     } else {
         firstTime = false;
     }
-    if (pendingSeekTime !== null) {
-        const seek = pendingSeekTime;
-        pendingSeekTime = null;
-        setTimeout(() => {
-            audio.currentTime = seek;
-        }, 200);
-    }
 }
 
 // ###############
@@ -289,6 +282,18 @@ audioPlayer.on('ended', () => {
     const nextIndex = currentIndex + 1;
     if (nextIndex < trackList.length) {
         loadTrackByIndex(nextIndex);
+    }
+});
+
+// ###############
+// Seek on play
+// ###############
+
+audio.addEventListener('playing', () => {
+    if (pendingSeekTime !== null) {
+        const seek = pendingSeekTime;
+        pendingSeekTime = null;
+        audio.currentTime = seek;
     }
 });
 
