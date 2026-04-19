@@ -78,7 +78,9 @@ function playWithHlsJs(hlsPlaylistUrl, audioPlayer) {
 
 function play(audioPlayer) {
     if (!firstTime) {
-        audioPlayer.play();
+        audioPlayer.play().catch(() => {
+            setTimeout(() => audioPlayer.play(), 500);
+        });
     } else {
         firstTime = false;
     }
@@ -143,17 +145,21 @@ function clearPlaybackState() {
 }
 
 function restoreOrLoad() {
+    const state = loadPlaybackState();
     const params = new URLSearchParams(window.location.search);
     const trackId = params.get('track');
+
     if (trackId) {
         const index = trackList.findIndex((t) => t.name === trackId);
         if (index !== -1) {
+            if (state && state.track === trackId) {
+                pendingSeekTime = state.time;
+            }
             loadTrackByIndex(index);
             return;
         }
     }
 
-    const state = loadPlaybackState();
     if (state) {
         const index = trackList.findIndex((t) => t.name === state.track);
         if (index !== -1) {
